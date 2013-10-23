@@ -580,6 +580,33 @@ build_mcfg_q35(void)
     return mcfg;
 }
 
+static void *
+build_dmar_q35(void)
+{
+    struct acpi_table_dmar *dmar;
+    struct dmar_drhd *drhd;
+
+    /* TBD: For now hard code 1 hw unit with 0 device scope entries */
+    int len = sizeof(*dmar) + sizeof(struct dmar_drhd); /* + 3 * sizeof(struct dmar_drhd); */
+    dmar = malloc_high(len);
+    if (!dmar) {
+        warn_noalloc();
+        return NULL;
+    }
+    memset(dmar, 0, len);
+    dmar->width = 0x27;
+    dmar->flags = 0; /* DMAR_INTR_REMAP */
+
+    drhd = (struct dmar_drhd*)((u8*)dmar + sizeof(*dmar));
+    drhd->length = sizeof(struct dmar_drhd);
+    drhd->type = 0;  /* DMA Remapping Hardware Unit Definition */
+    drhd->flags = DRHD_INCLUDE_PCI_ALL;
+    drhd->base_addr = cpu_to_le64(Q35_HOST_BRIDGE_IOMMU_ADDR);
+
+    build_header((void *)dmar, DMAR_SIGNATURE, len, 1);
+    return dmar;
+}
+
 static const struct pci_device_id acpi_find_tbl[] = {
     /* PIIX4 Power Management device. */
     PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82371AB_3, NULL),
@@ -620,8 +647,10 @@ acpi_setup(void)
     ACPI_INIT_TABLE(build_madt());
     ACPI_INIT_TABLE(build_hpet());
     ACPI_INIT_TABLE(build_srat());
-    if (pci->device == PCI_DEVICE_ID_INTEL_ICH9_LPC)
+    if (pci->device == PCI_DEVICE_ID_INTEL_ICH9_LPC) {
         ACPI_INIT_TABLE(build_mcfg_q35());
+        ACPI_INIT_TABLE(build_dmar_q35());
+    }
 
     struct romfile_s *file = NULL;
     for (;;) {

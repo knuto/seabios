@@ -279,4 +279,58 @@ struct acpi_table_mcfg {
     struct acpi_mcfg_allocation allocation[0];
 } PACKED;
 
+
+/* DMA Remapping table v.1 
+ * Based on
+ * Intel Virtual Technology for Directed I/O Arctitecture Specification v.2.2
+ */
+
+#define DMAR_SIGNATURE 0x52414d44 // DMAR
+struct acpi_table_dmar {
+    ACPI_TABLE_HEADER_DEF     /* ACPI common table header */
+    u8 width;		      /* Host Address Width */
+    u8 flags;
+    u8 reserved[10];
+} PACKED;
+
+/* Bits for flags in DMAR header */
+#define DMAR_INTR_REMAP     0x1
+#define DMAR_X2APIC_OPT_OUT 0x2
+
+/* Sub-structures for DMAR */
+
+struct dmar_device_scope
+{
+    u8 type;
+    u8 length;
+    u16 reserved;
+    u8 enum_id;
+    u8 start_bus_id;
+    u16 path[1];      /* Path through the bus hierarchy down to the DRHD unit */
+} PACKED;
+
+struct dmar_drhd
+{
+    u16 type;
+    u16 length;
+    u8 flags;
+    u8 reserved;
+    u16 segment_no;
+    u64 base_addr;
+    struct dmar_device_scope device_scope[0];
+} PACKED;
+
+/* Bits for flags in DRHD DMAR sub header */
+#define DRHD_INCLUDE_PCI_ALL 0x1
+
+struct dmar_rmrr
+{
+    ACPI_SUB_HEADER_DEF
+    u16 reserved;
+    u16 segment_no;
+    u64 base_addr;
+    u64 limit_addr;
+    struct dmar_device_scope device_scope[0];
+} PACKED;
+
 #endif // acpi.h

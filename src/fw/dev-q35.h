@@ -43,4 +43,7 @@
 #define ICH9_APM_ACPI_ENABLE           0x2
 #define ICH9_APM_ACPI_DISABLE          0x3
 
+/* DMAR Hardware Unit Definition address (IOMMU unit) */
+#define Q35_HOST_BRIDGE_IOMMU_ADDR   0xfed90000
+
 #endif // dev-q35.h
